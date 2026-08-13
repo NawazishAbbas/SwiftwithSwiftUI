@@ -8,5 +8,5 @@
 import Foundation
 
 protocol NetworkClientProtocol {
-    func load<Response: Decodable>() async throws -> Response
+    func load<Response: Decodable>(_ request: URLRequest, responseType: Response.Type) async throws -> Response
 }
