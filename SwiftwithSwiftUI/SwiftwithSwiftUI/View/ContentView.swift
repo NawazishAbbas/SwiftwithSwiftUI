@@ -7,16 +7,22 @@
 
 import SwiftUI
 
-struct ContentView: View {    
+struct ContentView: View {
     @StateObject private var vm = UsersViewModel(repository: APIUserRepository())
+    
+    @StateObject private var pm = ProductsViewModel(APIProductsRepository())
     
     var body: some View {
         NavigationView {
             ZStack {
-                if vm.isRefreshing {
+                if pm.isRefreshing {
                     ProgressView()
                 } else {
                     List {
+                        ForEach(pm.products, id: \.id) { product in
+                            ProductView(product: product)
+                        }
+                        
                         ForEach(vm.repoUsers, id: \.id) { user in
                             UserView(user: user)
                                 .listRowSeparator(.hidden)
@@ -29,13 +35,14 @@ struct ContentView: View {
             .onAppear {
                 Task {
                     await vm.loadUsers()
+                    await pm.fetchProducts()
                 }
             }
             .alert(isPresented: $vm.hasError, error: vm.error) {
                 Button("Retry", action:
                         { Task {
                     await vm.loadUsers()
-                    
+                    await pm.fetchProducts()
                 }
                 })
             }

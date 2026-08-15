@@ -7,6 +7,12 @@
 
 struct NetworkConfiguration {
     struct NetworkClient {
-        static let baseUrl = "https://jsonplaceholder.typicode.com/users"
+        static let userBaseUrl = "https://jsonplaceholder.typicode.com"
+        static let productBaseUrl = "https://dummyjson.com"
+
+        struct API {
+            static let getUsers = "/users"
+            static let getProduct = "/products"
+        }
     }
 }

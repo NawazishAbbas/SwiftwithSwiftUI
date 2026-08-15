@@ -24,7 +24,7 @@ enum UserError: LocalizedError {
 class APIUserRepository: UserRepository
 {
     func fetchUsers() async throws -> [User] {
-        let users: [User] = try await APIClient.shared.load()
+        let users: [User] = try await APIClient.shared.load(FetchUserRequest(), responseType: [User].self)
         return users
     }
 }
