@@ -7,45 +7,40 @@
 
 import Foundation
 
-enum Endpoint: String {
-    case usersList = "https://jsonplaceholder.typicode.com/users"
-}
-
 class APIClient: NetworkClientProtocol
 {
     static let shared = APIClient()
     var error: UserError?
-    
-    func load<Response>() async throws -> Response where Response : Decodable {
-        
-        guard let url = URL(string: Endpoint.usersList.rawValue) else {
+
+    func load<Response>(_ request: any Request, responseType: Response.Type) async throws -> Response where Response : Decodable {
+        guard let uRLRequest = request.urlRequest() else {
             error = UserError.custom(error: URLError(.badURL))
             throw UserError.custom(error: URLError(.badURL))
         }
         
-        do {
-            let (data, response) = try await URLSession.shared.data(from: url)
-            
-            // Optional: check for bad HTTP response
-            if let httpResponse = response as? HTTPURLResponse, !(200...299).contains(httpResponse.statusCode) {
-                if let _error = error {
-                    error = UserError.custom(error: _error)
-                }
-            }
-            
-            let decoder = JSONDecoder()
-            
-            do {
-                let users = try decoder.decode(Response.self, from: data)
-                return users
-            } catch {
-                self.error = .failedToDecode
-                throw UserError.failedToDecode
-            }
-            
-        } catch {
-            self.error = .custom(error: error)
-            throw error
+        return try await execute(uRLRequest, responseType: responseType)
+    }
+        
+    private func execute<Response: Decodable>(_ request: URLRequest, responseType: Response.Type) async throws -> Response {
+        let (data, response) = try await URLSession.shared.data(for: request)
+        
+        guard response is HTTPURLResponse else {
+            throw UserError.failedToDecode
         }
+        
+        return try handleResponse(data: data, response: response, responseType: responseType)
+    }
+    
+    private func handleResponse<Response: Decodable>(data: Data, response: URLResponse, responseType: Response.Type) throws -> Response {
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw UserError.failedToDecode
+        }
+        
+        guard 200..<300 ~= httpResponse.statusCode else {
+            throw UserError.failedToDecode
+        }
+        
+        let decoder = JSONDecoder()
+        return try decoder.decode(Response.self, from: data)
     }
 }

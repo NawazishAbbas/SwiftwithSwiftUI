@@ -31,7 +31,7 @@ import Foundation
             isRefreshing = false
             self.hasError = true
             self.error = UserError.custom(error: error)
-            #if DEBUG
+#if DEBUG
             print("Error: \(error)")
 #endif
         }
